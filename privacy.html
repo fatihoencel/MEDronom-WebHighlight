@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - WebMark & PDF Studio</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #e2e8f0;
+      --heading: #ffffff;
+      --accent: #3b82f6;
+      --border: #334155;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    h1 { color: var(--heading); font-size: 28px; margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 16px; }
+    h2 { color: var(--heading); font-size: 20px; margin-top: 32px; }
+    h3 { color: #93c5fd; font-size: 16px; }
+    p, li { font-size: 15px; color: #cbd5e1; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid var(--border); padding: 10px 14px; font-size: 14px; text-align: left; }
+    th { background: rgba(59, 130, 246, 0.15); color: var(--heading); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .badge { display: inline-block; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="badge">Privacy Policy</span>
+      <span style="font-size: 12px; color: #94a3b8;">Updated: October 7, 2026</span>
+    </div>
+    
+    <h1>WebMark & PDF Studio Privacy Policy</h1>
+    
+    <p><strong>WebMark & PDF Studio</strong> is designed with a <strong>privacy-first, 100% client-side</strong> architecture. We do not operate remote tracking servers, analytics engines, or databases. All data remains strictly in your own browser and your personal Google Drive account.</p>
+
+    <h2>1. Data Collection & Processing</h2>
+    <h3>A. Local Highlights & Annotations</h3>
+    <p>The text you highlight, colors, and styles are stored locally inside your browser via <code>chrome.storage.local</code>. No personal data is sent to us.</p>
+
+    <h3>B. Google Drive Integration (OAuth 2.0)</h3>
+    <p>When you enable Drive synchronization, the extension uses Google OAuth 2.0 (<code>drive.file</code> scope) to directly upload PDF files to your Google Drive under <code>Drive'ım / Uygulama verileri / MEDronom Web Highlighter</code>. The extension can only access files it creates, and cannot access any other files in your Google Drive.</p>
+
+    <h2>2. Permissions Justification</h2>
+    <table>
+      <thead>
+        <tr><th>Permission</th><th>Justification</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>storage</code></td><td>To save annotations locally in your browser.</td></tr>
+        <tr><td><code>activeTab</code> / <code>&lt;all_urls&gt;</code></td><td>To highlight text and capture PDFs on the page you select.</td></tr>
+        <tr><td><code>contextMenus</code></td><td>To provide quick right-click highlight & PDF options.</td></tr>
+        <tr><td><code>identity</code></td><td>To authenticate securely with Google Drive.</td></tr>
+        <tr><td><code>scripting</code></td><td>To display the floating toolbar and area selector UI.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>3. Zero Third-Party Sharing</h2>
+    <p>We do not sell, rent, monetize, or transmit user data. No tracking pixels, ads, or analytics scripts are included.</p>
+
+    <h2>4. Contact & Developer</h2>
+    <p>Developer: <strong>Fatih Öncel</strong> (<a href="mailto:fatihoencel@gmail.com">fatihoencel@gmail.com</a>)</p>
+  </div>
+</body>
+</html>

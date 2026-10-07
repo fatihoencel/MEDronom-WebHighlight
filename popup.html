@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMark & PDF Studio</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <img src="icons/icon32.png" alt="WebMark" width="24" height="24">
+        </div>
+        <div>
+          <h1 class="brand-title">WebMark <span class="brand-accent">& PDF</span></h1>
+          <p class="brand-sub">Sayfa Vurgulama & Akıllı PDF</p>
+        </div>
+      </div>
+      <div class="status-badge" id="statusBadge">Aktif</div>
+    </header>
+
+    <!-- Main PDF Actions Banner -->
+    <div class="section-card hero-card">
+      <div class="card-icon">🎯</div>
+      <div class="card-content">
+        <h3>Bölge Seçici ile PDF Oluştur</h3>
+        <p>Sayfada istediğiniz kısımlara tıklayın, sadece o bölümleri tek bir PDF olarak indirin.</p>
+      </div>
+      <button class="btn btn-primary" id="btnTogglePicker">
+        Bölge Seçiciyi Başlat
+      </button>
+    </div>
+
+    <!-- Google Drive Auto Sync Section -->
+    <div class="section-card drive-card">
+      <div class="drive-header">
+        <div class="drive-icon-badge">☁️</div>
+        <div class="drive-info">
+          <h4>Google Drive Otomatik Yedekleme</h4>
+          <p id="driveStatusText">Altını çizdiğiniz her şey PDF olarak Drive'a yüklenir.</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleDriveSync">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="drive-details" id="driveDetails" style="display: none;">
+        <div class="drive-meta-row">
+          <span class="drive-meta-label">Klasör Yapısı:</span>
+          <span class="drive-meta-val" id="driveFolderPreview">📁 Drive'ım / Uygulama verileri / MEDronom Web Highlighter / 🌐 [Site-URL]</span>
+        </div>
+        <div class="drive-client-row">
+          <label for="inputClientId" class="drive-meta-label">Google Cloud Client ID:</label>
+          <div class="client-id-input-group">
+            <input type="text" id="inputClientId" placeholder="xxxx.apps.googleusercontent.com" spellcheck="false">
+            <button class="btn btn-save-client" id="btnSaveClientId">Kaydet</button>
+          </div>
+          <div class="redirect-uri-row">
+            <span class="drive-meta-label">Yetkili Yönlendirme URI (Google Console'a Ekleyin):</span>
+            <div class="redirect-uri-copy">
+              <input type="text" id="inputRedirectUri" readonly>
+              <button class="btn btn-copy-uri" id="btnCopyUri" title="Kopyala">Kopyala</button>
+            </div>
+          </div>
+          <small class="drive-hint"><a href="#" id="linkClientIdHelp">Google Cloud Console'u Aç ↗</a></small>
+        </div>
+        <div class="drive-auth-actions">
+          <button class="btn btn-drive-auth" id="btnDriveAuth">Google ile Bağlan</button>
+          <span class="drive-user-email" id="driveUserEmail"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Tools -->
+    <div class="quick-tools-grid">
+      <button class="tool-btn" id="btnExportFullPage" title="Tüm sayfayı PDF yap">
+        <span class="tool-icon">📄</span>
+        <span class="tool-name">Tam Sayfa PDF</span>
+      </button>
+
+      <button class="tool-btn" id="btnQuickHighlight" title="Seçili metni sarı vurgula">
+        <span class="tool-icon">🖍️</span>
+        <span class="tool-name">Hızlı Vurgu</span>
+      </button>
+
+      <button class="tool-btn" id="btnQuickWavy" title="Seçili metnin altını dalgalı çiz">
+        <span class="tool-icon">〰️</span>
+        <span class="tool-name">Dalgalı Çiz</span>
+      </button>
+
+      <button class="tool-btn" id="btnQuickSolid" title="Seçili metnin altını düz çiz">
+        <span class="tool-icon">➖</span>
+        <span class="tool-name">Düz Alt Çizgi</span>
+      </button>
+    </div>
+
+    <!-- Page Annotations Section -->
+    <div class="annotations-section">
+      <div class="annotations-header">
+        <div class="annotations-title">
+          <span>Sayfa Vurguları</span>
+          <span class="count-pill" id="annotationCount">0</span>
+        </div>
+        <div class="annotations-actions">
+          <button class="text-btn" id="btnClearAll" title="Tümünü Sil">Hepsini Temizle</button>
+          <button class="text-btn" id="btnExportJson" title="JSON İndir">Dışa Aktar</button>
+        </div>
+      </div>
+
+      <div class="annotations-list" id="annotationsList">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📝</div>
+          <p>Bu sayfada henüz vurgulama veya çizim yok.</p>
+          <small>Sayfadaki herhangi bir metni seçtiğinizde araç çubuğu otomatik açılacaktır.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shortcuts Footer -->
+    <footer class="popup-footer">
+      <div class="shortcut-tip">
+        <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> Bölge Seçici &bull; <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> Vurgula
+      </div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

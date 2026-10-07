@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMark & PDF Studio - Test ve Tanıtım Sayfası</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --border: #e2e8f0;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      padding: 40px 20px 100px;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    header.hero {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 30px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      color: white;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(49, 46, 129, 0.2);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      font-size: 15px;
+      color: #cbd5e1;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+    .article-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2::before {
+      content: "";
+      width: 4px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 2px;
+      display: inline-block;
+    }
+    p {
+      margin-bottom: 16px;
+      color: #334155;
+      font-size: 15px;
+    }
+    blockquote {
+      border-left: 4px solid #6366f1;
+      padding: 14px 20px;
+      margin: 20px 0;
+      background: #f1f5f9;
+      border-radius: 0 10px 10px 0;
+      font-style: italic;
+      color: #1e293b;
+      font-size: 15px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .feature-box {
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+    .feature-box h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+    .feature-box p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #475569;
+    }
+    .instruction-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .step-number {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .step-text {
+      font-size: 14px;
+      color: #334155;
+    }
+    code {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: monospace;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <span class="badge">🚀 Canlı Test Ortamı</span>
+      <h1>WebMark & PDF Studio</h1>
+      <p>Bu sayfadaki herhangi bir metni fareyle seçerek açılan modern araç çubuğunu test edebilirsiniz. Vurgulayın, düz/dalgalı altını çizin, font değiştirin ve seçimi PDF olarak indirin!</p>
+    </header>
+
+    <!-- Section 1 -->
+    <article class="article-card" id="section-1">
+      <h2>1. Metin Vurgulama ve Çizim Özellikleri</h2>
+      <p>
+        Bilgi çağında dijital belgeleri okurken önemli noktaların altını çizmek ve renklendirmek bilgiyi akılda tutmanın en etkili yoludur. WebMark uzantısı, Chrome üzerinde ziyaret ettiğiniz herhangi bir web sitesindeki metinleri dilediğiniz canlı pastel renklerle veya özel HEX renk paletiyle vurgulamanızı sağlar.
+      </p>
+      <p>
+        Sadece vurgulamakla kalmayıp, belirlediğiniz cümlelerin altını <strong>düz bir çizgiyle</strong> veya dikkat çekici <strong>dalgalı (wavy) bir çizgiyle</strong> istediğiniz renk tonunda çizebilirsiniz. Hata veya şüphe içeren noktaları kırmızı dalgalı çizgiyle, doğrulanmış kritik bilgileri ise yeşil düz çizgiyle işaretlemek harika bir çalışma disiplini sunar.
+      </p>
+
+      <blockquote>
+        "Önemli olan çok okumak değil, okunan bilginin özünü seçebilmek ve gerektiğinde dönüp kolayca başvurabilmektir."
+      </blockquote>
+    </article>
+
+    <!-- Section 2 -->
+    <article class="article-card" id="section-2">
+      <h2>2. Tipografi ve Yazı Tipi Değiştirici</h2>
+      <p>
+        Bazen bir web sayfasının varsayılan yazı tipi gözü yorabilir veya okumayı zorlaştırabilir. WebMark'ın entegre font seçicisi sayesinde seçtiğiniz herhangi bir metin bloğunu anında popüler web yazı tiplerine dönüştürebilirsiniz:
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-box">
+          <h4>Inter / Roboto</h4>
+          <p>Modern ve temiz sans-serif yazı tipleri, ekran okumalarında maksimum netlik sağlar.</p>
+        </div>
+        <div class="feature-box">
+          <h4>Merriweather / Georgia</h4>
+          <p>Uzun soluklu editoryal okumalar ve akademik makaleler için ideal serif fontlar.</p>
+        </div>
+        <div class="feature-box">
+          <h4>JetBrains Mono</h4>
+          <p>Yazılım kodları, teknik terimler ve matematiksel ifadeler için mükemmel sabit aralıklı font.</p>
+        </div>
+        <div class="feature-box">
+          <h4>OpenDyslexic</h4>
+          <p>Okuma güçlüğü ve disleksiye sahip bireyler için harf ağırlıkları optimize edilmiş özel yazı tipi.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Section 3 -->
+    <article class="article-card" id="section-3">
+      <h2>3. Seçimle veya Bölge Seçerek PDF İndirme</h2>
+      <p>
+        Bu uzantının en güçlü yönlerinden biri sayfanın tamamını değil, yalnızca sizin belirlediğiniz alanları derleyerek tertemiz bir PDF haline getirmesidir:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>PDF İndirme Yöntemi</th>
+            <th>Nasıl Yapılır?</th>
+            <th>Sonuç</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Seçili Metni PDF Yap</strong></td>
+            <td>Herhangi bir metni seçin ve araç çubuğundaki "📄 Seçimi PDF Yap" butonuna tıklayın.</td>
+            <td>Seçtiğiniz metin vurguları ve stilleriyle birlikte anında A4 PDF olarak iner.</td>
+          </tr>
+          <tr>
+            <td><strong>Bölge Seçici (Element Picker)</strong></td>
+            <td>Uzantı simgesine basıp "Bölge Seçiciyi Başlat" butonuna tıklayın veya <code>Alt+Shift+P</code> tuşlayın.</td>
+            <td>Sayfadaki dilediğiniz kartlara, paragraflara tıklayın. Ardından "PDF Olarak İndir"e basın.</td>
+          </tr>
+          <tr>
+            <td><strong>Yüksek Çözünürlüklü Vektör PDF</strong></td>
+            <td>Bölge seçicide "🖨️ Vektör Yazdır" butonunu kullanarak Chrome'un doğrudan PDF yazıcısına gönderin.</td>
+            <td>Metinler seçilebilir ve aranabilir saf vektör kalitesinde PDF olarak kaydedilir.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <!-- Section 4 -->
+    <article class="article-card" id="section-4">
+      <h2>4. Hızlı Kullanım Rehberi</h2>
+      <div class="instruction-steps">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-text">Yukarıdaki metinlerden herhangi birini farenizle seçin.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-text">Seçimin hemen üzerinde açılan yüzen araç çubuğundaki <strong>Sarı, Yeşil veya Özel renk</strong> butonuna tıklayın.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-text">Başka bir cümlenin altını <strong>〰️ Dalgalı</strong> ya da <strong>➖ Düz</strong> çizgi ile çizmeyi deneyin.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-text">Araç çubuğundaki <strong>📄 Seçimi PDF Yap</strong> butonuna tıklayarak doğrudan bilgisayarınıza PDF olarak indiğini görün.</div>
+        </div>
+      </div>
+    </article>
+  </div>
+</body>
+</html>
