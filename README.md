@@ -6,7 +6,7 @@ Modern and powerful Chrome extension to highlight web text with custom colors, u
 - 🖍️ **Multi-color Highlighting**: 6 vibrant pastel swatches + full RGB/HEX color picker.
 - ➖ **Solid Underlines**: Clean, customizable straight underlines with custom color support.
 - 〰️ **Wavy Underlines**: Squiggly, attention-grabbing underlines for notes, edits, or emphasis.
-- 🔤 **Dynamic Typography**: Switch selected text fonts to Inter, Merriweather, Georgia, Roboto, JetBrains Mono, OpenDyslexic, Playfair Display, and Comic Neue.
+- 🔤 **Dynamic Typography**: Apply font styles to selected text using fonts available on the device, with system fallbacks. No external font download is made.
 - 📄 **Export Selection to PDF**: Immediate client-side formatted PDF generation with source URL, date, and preserved annotations via `html2pdf.js`.
 - 🎯 **Interactive Element Picker**: Click any section, table, blockquote, or card on the page to bundle and download as a single unified PDF.
 - 💾 **Local Persistence**: Automatically stores and restores annotations per URL using `chrome.storage.local`.

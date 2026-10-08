@@ -13,7 +13,7 @@ MEDronom - WebHighlight ("the Extension") lets you highlight and underline text 
 ## 2. What we do not do
 
 - We do not sell, rent or share user data, and do not use it for advertising, credit or any unrelated purpose.
-- We do not collect your name, email, IP address, browsing history or passwords, and include no analytics, tracking or advertising code.
+- The developer does not collect your name, email, IP address or passwords. The Extension does not monitor your general browsing history and includes no analytics, tracking or advertising code. It does store the source address of pages where you create highlights, as described above; optional Drive saving transmits that source address with the PDF.
 - We do not load or run remote code. The PDF library is bundled inside the Extension.
 
 ## 3. Permissions and why they are needed

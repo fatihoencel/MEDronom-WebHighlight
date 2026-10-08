@@ -14,11 +14,7 @@
   const STORAGE_KEY = `webmark_${location.origin}${cleanPath}`;
   const LEGACY_STORAGE_KEY = `webmark_${location.origin}${rawPath}`;
 
-  // Preload Google Fonts for typography switches
-  const fontLink = document.createElement("link");
-  fontLink.rel = "stylesheet";
-  fontLink.href = "https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Open+Sans:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,400&family=Roboto:wght@400;500;700&display=swap";
-  document.head.appendChild(fontLink);
+  // Use fonts available on the device without external font requests.
 
   // =========================================================================
   // DOM Range Highlighting & Wrapping Logic
@@ -1230,7 +1226,6 @@
       <html>
       <head>
         <title>${document.title} - WebMark PDF</title>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue&family=Inter:wght@400;600&family=JetBrains+Mono&family=Merriweather&family=Playfair+Display&family=Roboto&display=swap">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; line-height: 1.6; }
           .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; }
