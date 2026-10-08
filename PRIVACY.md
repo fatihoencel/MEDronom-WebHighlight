@@ -70,4 +70,4 @@ We may update this Privacy Policy from time to time. Any modifications will be p
 If you have questions or feedback regarding this Privacy Policy, you can open an issue on the GitHub repository or contact the developer directly:
 - **Developer:** Fatih Öncel
 - **Email:** fatihoencel@gmail.com
-- **Repository:** https://github.com/fatihoncel/WebMark-PDF-Studio
+- **Repository:** https://github.com/fatihoencel/MEDronom-WebHighlight
