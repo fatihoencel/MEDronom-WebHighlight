@@ -1234,6 +1234,8 @@
       hoveredPickerElement.classList.remove('webmark-picker-hover');
       hoveredPickerElement = null;
     }
+    pickerBase = null;
+    pickerLevel = 0;
 
     // Clean up outlines and badges
     selectedPickerElements.forEach(el => {
@@ -1271,6 +1273,7 @@
       <button class="webmark-picker-btn btn-cancel" id="webmark-picker-exit">
         <svg viewBox="0 0 32 32" width="13" height="13" fill="none" style="vertical-align:-3px;flex-shrink:0"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.4" d="M8 8l16 16M24 8L8 24"/></svg> Çık (ESC)
       </button>
+      <div class="webmark-picker-hint"><span id="webmark-picker-target">Bir alanın üzerine gelin</span><span> · ↑ ↓ ile kapsayıcıyı değiştirin · tıklayarak seçin / kaldırın</span></div>
     `;
 
     document.body.appendChild(pickerPanel);
@@ -1315,75 +1318,133 @@
     }
   }
 
-  // Hover over elements in picker mode
+  // Hover / seçim: en yakın blok öğeden başlar, ↑ ↓ ile üst/alt kapsayıcıya geçilir (devtools gibi)
+  const PICKER_BLOCK_SEL = 'p, li, blockquote, pre, td, th, tr, h1, h2, h3, h4, h5, h6, dt, dd, figure, table, ul, ol, dl, article, section, main, header, footer, aside, nav, div';
+  const PICKER_NO_BADGE = /^(TR|TABLE|TBODY|THEAD|TFOOT|UL|OL|DL|SELECT)$/;
+  const PICKER_UI = '#webmark-picker-panel, #webmark-toast-container, #webmark-floating-toolbar';
+  let pickerBase = null;
+  let pickerLevel = 0;
+
+  function pickerAncestor(base, level) {
+    let el = base;
+    let used = 0;
+    while (used < level && el.parentElement && el.parentElement !== document.body && el.parentElement !== document.documentElement) {
+      el = el.parentElement;
+      used++;
+    }
+    pickerLevel = used; // üst sınıra dayandıysa seviyeyi sabitle
+    return el;
+  }
+
+  function describePickerTarget(el) {
+    const r = el.getBoundingClientRect();
+    const own = typeof el.className === 'string' ? el.className.split(/\s+/).find((c) => c && !c.startsWith('webmark-')) : '';
+    const cls = own ? '.' + own : '';
+    const id = el.id ? '#' + el.id : '';
+    return `${el.tagName.toLowerCase()}${id}${cls} · ${Math.round(r.width)}×${Math.round(r.height)}`;
+  }
+
+  function setPickerHover(el) {
+    if (hoveredPickerElement && hoveredPickerElement !== el) {
+      hoveredPickerElement.classList.remove('webmark-picker-hover');
+    }
+    hoveredPickerElement = el;
+    if (el) {
+      el.classList.add('webmark-picker-hover');
+      const label = document.getElementById('webmark-picker-target');
+      if (label) label.textContent = describePickerTarget(el);
+    }
+  }
+
+  function renumberPickerBadges() {
+    selectedPickerElements.forEach((el, idx) => {
+      const b = el.querySelector(':scope > .webmark-selected-badge');
+      if (b) b.textContent = `#${idx + 1}`;
+    });
+  }
+
+  function unselectPickerElement(el) {
+    const i = selectedPickerElements.indexOf(el);
+    if (i === -1) return;
+    selectedPickerElements.splice(i, 1);
+    el.classList.remove('webmark-selected-for-pdf');
+    const badge = el.querySelector(':scope > .webmark-selected-badge');
+    if (badge) badge.remove();
+  }
+
   document.addEventListener('mouseover', (e) => {
     if (!isPickerActive) return;
-    if (e.target.closest('#webmark-picker-panel, #webmark-toast-container, #webmark-floating-toolbar')) return;
+    if (e.target.closest(PICKER_UI)) return;
 
-    // Pick meaningful block/content element
-    const target = e.target.closest('article, section, main, div, p, blockquote, table, figure, header, footer, aside, h1, h2, h3, h4, h5, h6') || e.target;
+    const base = e.target.closest(PICKER_BLOCK_SEL) || e.target;
+    if (base === document.body || base === document.documentElement) return;
 
-    if (target === document.body || target === document.documentElement) return;
-
-    if (hoveredPickerElement && hoveredPickerElement !== target) {
-      hoveredPickerElement.classList.remove('webmark-picker-hover');
+    if (base !== pickerBase) {
+      pickerBase = base;
+      pickerLevel = 0;
     }
-
-    hoveredPickerElement = target;
-    hoveredPickerElement.classList.add('webmark-picker-hover');
+    setPickerHover(pickerAncestor(pickerBase, pickerLevel));
   });
 
-  document.addEventListener('mouseout', (e) => {
-    if (!isPickerActive) return;
-    if (hoveredPickerElement && e.target === hoveredPickerElement) {
-      hoveredPickerElement.classList.remove('webmark-picker-hover');
-      hoveredPickerElement = null;
-    }
+  // Sitenin kendi tıklama/sürükleme işleyicileri seçimi bozmasın (pencere düzeyinde, capture)
+  ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'auxclick', 'dblclick', 'contextmenu'].forEach((type) => {
+    window.addEventListener(type, (e) => {
+      if (!isPickerActive || e.target.closest(PICKER_UI)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
   });
 
-  // Click on element to select/unselect for PDF
-  document.addEventListener('click', (e) => {
+  // Tıklayarak seç / seçimi kaldır (çoklu seçim)
+  window.addEventListener('click', (e) => {
     if (!isPickerActive) return;
-    if (e.target.closest('#webmark-picker-panel, #webmark-toast-container, #webmark-floating-toolbar')) return;
+    if (e.target.closest(PICKER_UI)) return;
 
     e.preventDefault();
-    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-    const target = hoveredPickerElement || e.target;
+    let target = hoveredPickerElement;
+    if (!target) {
+      const base = e.target.closest(PICKER_BLOCK_SEL) || e.target;
+      target = pickerAncestor(base, 0);
+    }
     if (!target || target === document.body || target === document.documentElement) return;
 
-    const existingIndex = selectedPickerElements.indexOf(target);
-    if (existingIndex !== -1) {
-      // Deselect
-      selectedPickerElements.splice(existingIndex, 1);
-      target.classList.remove('webmark-selected-for-pdf');
-      const badge = target.querySelector('.webmark-selected-badge');
-      if (badge) badge.remove();
-      // Re-number badges
-      selectedPickerElements.forEach((el, idx) => {
-        const b = el.querySelector('.webmark-selected-badge');
-        if (b) b.textContent = `#${idx + 1}`;
-      });
+    if (selectedPickerElements.includes(target)) {
+      unselectPickerElement(target);
+      renumberPickerBadges();
+    } else if (selectedPickerElements.some((el) => el.contains(target))) {
+      showToast('Bu alan zaten seçili bir bölümün içinde. Üst alana tıklayarak onu kaldırabilirsiniz.', 'warning', 3500);
+      return;
     } else {
-      // Select
+      // İçindeki seçili alt alanlar yeni (kapsayıcı) seçime katılır; PDF'te tekrar etmesin
+      selectedPickerElements.filter((el) => target.contains(el)).forEach(unselectPickerElement);
       selectedPickerElements.push(target);
       target.classList.add('webmark-selected-for-pdf');
-      const badge = document.createElement('div');
-      badge.className = 'webmark-selected-badge';
-      badge.textContent = `#${selectedPickerElements.length}`;
-      target.appendChild(badge);
+      if (!PICKER_NO_BADGE.test(target.tagName)) {
+        const badge = document.createElement('div');
+        badge.className = 'webmark-selected-badge';
+        target.appendChild(badge);
+      }
+      renumberPickerBadges();
     }
 
     updatePickerCount();
   }, true);
 
-  // Press ESC to exit picker mode
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isPickerActive) {
+  // ESC: çık  |  ↑ ↓: kapsayıcı seviyesini değiştir
+  window.addEventListener('keydown', (e) => {
+    if (!isPickerActive) return;
+    if (e.key === 'Escape') {
       exitPickerMode();
       showToast('Bölge seçiciden çıkıldı', 'info');
+    } else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && pickerBase) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pickerLevel = Math.max(0, pickerLevel + (e.key === 'ArrowUp' ? 1 : -1));
+      setPickerHover(pickerAncestor(pickerBase, pickerLevel));
     }
-  });
+  }, true);
 
   // =========================================================================
   // Toast Notifications
