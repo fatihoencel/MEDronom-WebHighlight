@@ -978,3 +978,39 @@ kbd {
     transition: none !important;
   }
 }
+
+/* Aç/kapat düğmeleri: açıkken kendi pastel rengi, kapalıyken pastel kırmızı */
+.tool-state {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-text);
+  line-height: 1;
+}
+
+.tool-toggle[aria-pressed="true"] {
+  border-color: var(--green-hi);
+  background: var(--card-hi);
+}
+
+.tool-toggle[aria-pressed="false"] {
+  border-color: #EFA9A3;
+  background: #FDEBE9;
+  box-shadow: 3px 3px 0 rgba(217, 83, 79, 0.18);
+}
+
+.tool-toggle[aria-pressed="false"] .tool-icon {
+  background: #F9D2CE;
+  color: #B9473F;
+}
+
+.tool-toggle[aria-pressed="false"] .tool-state {
+  color: #B9473F;
+}
+
+/* Açıkken her düğme kendi pastel rengini alır */
+#btnQuickHighlight[aria-pressed="true"] { background: #FEF6D6; border-color: #E3BC45; box-shadow: 3px 3px 0 rgba(227, 188, 69, 0.3); }
+#btnQuickHighlight[aria-pressed="true"] .tool-state { color: #8A6A0C; }
+#btnQuickWavy[aria-pressed="true"] { background: #EEEAFC; border-color: #A79BE6; box-shadow: 3px 3px 0 rgba(167, 155, 230, 0.3); }
+#btnQuickWavy[aria-pressed="true"] .tool-state { color: #5646C2; }
+#btnQuickSolid[aria-pressed="true"] { background: #E2F0FB; border-color: #8DBBE0; box-shadow: 3px 3px 0 rgba(141, 187, 224, 0.3); }
+#btnQuickSolid[aria-pressed="true"] .tool-state { color: #2E5873; }

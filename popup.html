@@ -62,23 +62,26 @@
     <!-- Quick Tools -->
     <div class="quick-tools-grid">
       <button class="tool-btn" id="btnExportFullPage" title="Tüm sayfayı PDF yap">
-        <svg class="sk tool-icon c-sky"><use href="#i-page"/></svg>
+        <svg class="sk tool-icon c-mint"><use href="#i-page"/></svg>
         <span class="tool-name">Tam Sayfa PDF</span>
       </button>
 
-      <button class="tool-btn" id="btnQuickHighlight" title="Seçili metni sarı vurgula">
+      <button class="tool-btn tool-toggle" id="btnQuickHighlight" title="Açıkken seçtiğiniz tüm metinler sarı vurgulanır" aria-pressed="false">
         <svg class="sk tool-icon c-butter"><use href="#i-marker"/></svg>
-        <span class="tool-name">Hızlı Vurgu</span>
+        <span class="tool-name">Vurgula</span>
+        <span class="tool-state">Kapalı</span>
       </button>
 
-      <button class="tool-btn" id="btnQuickWavy" title="Seçili metnin altını dalgalı çiz">
+      <button class="tool-btn tool-toggle" id="btnQuickWavy" title="Açıkken seçtiğiniz tüm metinlerin altı dalgalı çizilir" aria-pressed="false">
         <svg class="sk tool-icon c-lilac"><use href="#i-wavy"/></svg>
         <span class="tool-name">Dalgalı Çiz</span>
+        <span class="tool-state">Kapalı</span>
       </button>
 
-      <button class="tool-btn" id="btnQuickSolid" title="Seçili metnin altını düz çiz">
-        <svg class="sk tool-icon c-peach"><use href="#i-underline"/></svg>
-        <span class="tool-name">Düz Alt Çizgi</span>
+      <button class="tool-btn tool-toggle" id="btnQuickSolid" title="Açıkken seçtiğiniz tüm metinlerin altı çizilir" aria-pressed="false">
+        <svg class="sk tool-icon c-sky"><use href="#i-underline"/></svg>
+        <span class="tool-name">Altını Çiz</span>
+        <span class="tool-state">Kapalı</span>
       </button>
     </div>
 

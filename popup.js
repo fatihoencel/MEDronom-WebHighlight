@@ -138,24 +138,28 @@ document.addEventListener('DOMContentLoaded', () => {
     window.close();
   });
 
-  // Quick Highlight
-  btnQuickHighlight.addEventListener('click', () => {
-    sendTabMessage({ action: 'apply-style', styleType: 'highlight', color: '#fef08a' }, () => {
-      refreshAnnotations();
-    });
-  });
+  // Aç/kapat düğmeleri (aynı anda yalnızca biri açık): açıkken seçilen tüm metinlere otomatik uygulanır
+  const AUTO_MODES = [
+    { btn: btnQuickHighlight, mode: 'highlight' },
+    { btn: btnQuickWavy, mode: 'underline-wavy' },
+    { btn: btnQuickSolid, mode: 'underline-solid' }
+  ];
 
-  // Quick Wavy Underline
-  btnQuickWavy.addEventListener('click', () => {
-    sendTabMessage({ action: 'apply-style', styleType: 'underline-wavy', color: '#dc2626' }, () => {
-      refreshAnnotations();
+  function renderAutoMode(active) {
+    AUTO_MODES.forEach(({ btn, mode }) => {
+      const on = mode === active;
+      btn.setAttribute('aria-pressed', String(on));
+      btn.querySelector('.tool-state').textContent = on ? 'Açık' : 'Kapalı';
     });
-  });
+  }
 
-  // Quick Solid Underline
-  btnQuickSolid.addEventListener('click', () => {
-    sendTabMessage({ action: 'apply-style', styleType: 'underline-solid', color: '#2563eb' }, () => {
-      refreshAnnotations();
+  chrome.storage.local.get(['auto_mode'], (res) => renderAutoMode(res && res.auto_mode));
+
+  AUTO_MODES.forEach(({ btn, mode }) => {
+    btn.addEventListener('click', () => {
+      const turnOn = btn.getAttribute('aria-pressed') !== 'true';
+      const next = turnOn ? mode : null;
+      chrome.storage.local.set({ auto_mode: next }, () => renderAutoMode(next));
     });
   });
 

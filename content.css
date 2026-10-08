@@ -524,3 +524,20 @@ body.webmark-picker-active {
   font-weight: 600;
   color: #1F7A55;
 }
+
+/* Yazdırma: eklenti arayüzünü gizle, vurgu renkleri kağıda da çıksın */
+@media print {
+  #webmark-floating-toolbar,
+  #webmark-picker-panel,
+  #webmark-toast-container,
+  .webmark-selected-badge {
+    display: none !important;
+  }
+
+  mark.webmark-highlight,
+  .webmark-underline-solid,
+  .webmark-underline-wavy {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

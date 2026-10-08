@@ -820,6 +820,18 @@
     }
   }, { capture: true });
 
+  // Popup'taki aç/kapat düğmeleri: açık mod, seçilen tüm metne otomatik uygulanır
+  const AUTO_STYLE_COLORS = { 'highlight': '#fef08a', 'underline-wavy': '#dc2626', 'underline-solid': '#2563eb' };
+  let autoMode = null;
+  try {
+    chrome.storage.local.get(['auto_mode'], (r) => { autoMode = (r && r.auto_mode) || null; });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.auto_mode) autoMode = changes.auto_mode.newValue || null;
+    });
+  } catch (e) {
+    console.warn('Otomatik mod okunamadı:', e);
+  }
+
   // Handle Selection Changes
   document.addEventListener('mouseup', (e) => {
     if (isPickerActive) return;
@@ -838,6 +850,17 @@
       }
 
       currentSelectionRange = selection.getRangeAt(0).cloneRange();
+
+      // Otomatik mod açıksa seçilen metin hemen biçimlenir (araç çubuğu açılmaz)
+      if (autoMode && AUTO_STYLE_COLORS[autoMode] && !e.target.closest('input, textarea, [contenteditable="true"]')) {
+        if (!isRuntimeValid()) { warnStaleExtension(); return; }
+        applyStyleToRange(currentSelectionRange, { type: autoMode, color: AUTO_STYLE_COLORS[autoMode] });
+        selection.removeAllRanges();
+        hideFloatingToolbar();
+        currentSelectionRange = null;
+        return;
+      }
+
       const rect = currentSelectionRange.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         showFloatingToolbar(rect);
@@ -1151,6 +1174,14 @@
   function exportElementsToPdf(elements) {
     if (!elements || elements.length === 0) {
       showToast('Lütfen önce sayfadan en az bir bölge seçin', 'warning');
+      return;
+    }
+
+    // Toplam yükseklik tuval sınırını aşarsa PDF boş çıkar; yazdırma yoluna geç
+    const totalHeight = elements.reduce((sum, el) => sum + el.scrollHeight, 0);
+    if (totalHeight > 12000) {
+      showToast('Seçim çok uzun: yazdırma penceresinde "PDF olarak kaydet"i seçin.', 'info', 5000);
+      triggerPrintWindow(elements);
       return;
     }
 
@@ -1559,8 +1590,10 @@
       sendResponse({ success: true });
     } else if (req.action === 'export-full-page-pdf') {
       // Export whole page or main article
-      const target = document.querySelector('article, main, #content, .content') || document.body;
-      exportElementsToPdf([target]);
+      // Çok uzun sayfalar tek bir tuvale sığmaz (tarayıcı sınırı ~32k px) ve PDF boş çıkar;
+      // bu yüzden tarayıcının yazdırma motoru kullanılır (vektör, metin seçilebilir, uzunluk sınırı yok).
+      showToast('Yazdırma penceresinde hedef olarak "PDF olarak kaydet"i seçin.', 'info', 5000);
+      setTimeout(() => window.print(), 600);
       sendResponse({ success: true });
     }
     return true; // Keep message channel open for async response
