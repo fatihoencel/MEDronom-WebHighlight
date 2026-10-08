@@ -3,7 +3,7 @@
 
 async function renderPdf(html) {
   const host = document.createElement('div');
-  host.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;';
+  host.style.cssText = 'position:absolute;left:0;top:0;width:700px;background:#fff;';
   host.innerHTML = html;
   document.body.appendChild(host);
   const el = host.firstElementChild;
@@ -12,7 +12,8 @@ async function renderPdf(html) {
     const pdf = await window.html2pdf().set({
       margin: [10, 10, 10, 10],
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 760 },
+      pagebreak: { mode: ['css', 'legacy'] },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     }).from(el).outputPdf('datauristring');
 

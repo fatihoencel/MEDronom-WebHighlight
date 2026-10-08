@@ -331,8 +331,18 @@
     }
   }
 
+  // Eklenti yeniden yüklenince açık sekmelerdeki içerik script'i "yetim" kalır: vurgu sayfada görünür ama
+  // kaydedilmez ve Drive'a gitmez. Bunu sessizce yutmak yerine kullanıcıya göster.
+  let lastStaleWarning = 0;
+  function warnStaleExtension() {
+    const now = Date.now();
+    if (now - lastStaleWarning < 10000) return;
+    lastStaleWarning = now;
+    showToast('Eklenti güncellendi veya yeniden yüklendi. Bu vurgu kaydedilmedi ve Drive\'a gönderilmedi: sayfayı yenileyip (F5) tekrar deneyin.', 'warning', 10000);
+  }
+
   function saveAnnotations() {
-    if (!isRuntimeValid()) return;
+    if (!isRuntimeValid()) { warnStaleExtension(); return; }
     try {
       const data = {};
       data[STORAGE_KEY] = pageAnnotations;
@@ -536,7 +546,9 @@
   let floatingToolbar = null;
 
   function createFloatingToolbar() {
-    if (document.getElementById('webmark-floating-toolbar')) return;
+    // Eklenti yeniden yüklenince eski kopyanın araç çubuğu sayfada kalabilir; yenisi kendi çubuğunu kurmalı
+    const stale = document.getElementById('webmark-floating-toolbar');
+    if (stale) stale.remove();
 
     floatingToolbar = document.createElement('div');
     floatingToolbar.id = 'webmark-floating-toolbar';
@@ -843,10 +855,10 @@
     const container = document.createElement('div');
     container.className = 'webmark-pdf-render-root';
     container.style.cssText = `
-      width: 794px; /* A4 standard web width */
+      width: 700px; /* A4 iç genişliğine sığar */
       background: #ffffff;
       color: #1e293b;
-      padding: 36px 44px;
+      padding: 28px 32px;
       box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       font-size: 14px;
@@ -964,7 +976,7 @@
 
   // Automatic Google Drive Sync for Highlight / Annotation
   async function triggerAutoDriveSync(annotation) {
-    if (!isRuntimeValid()) return;
+    if (!isRuntimeValid()) { warnStaleExtension(); return; }
     if (annotation.type === 'font') return; // yazı tipi değişikliği PDF'e gönderilmez
 
     const safeColor = (c, d) => (/^#[0-9a-f]{3,8}$/i.test(c || '') || /^rgba?\([\d\s.,%]+\)$/i.test(c || '')) ? c : d;
@@ -1025,9 +1037,26 @@
           const ctxBefore = annotation.pdfBefore || annotation.beforeContext || '';
           const ctxAfter = annotation.pdfAfter || annotation.afterContext || '';
           const ctxStyle = 'color: #64748b; font-size: 13.5px;';
-          const beforeHtml = `<span style="${ctxStyle}">${ctxBefore ? para(ctxBefore) + ' ' : ''}</span>`;
-          const afterHtml = `<span style="${ctxStyle}">${ctxAfter && !ctxAfter.startsWith('\n') ? ' ' : ''}${para(ctxAfter)}</span>`;
-          const hlHtml = `<span class="pdf-highlight" style="${highlightStyle} -webkit-box-decoration-break: clone; box-decoration-break: clone;">${para(annotation.text)}</span>`;
+          const hlSpanStyle = `${highlightStyle} -webkit-box-decoration-break: clone; box-decoration-break: clone;`;
+          // Metin paragraflara bölünür; art arda boş satırlar tek paragraf ayracı olur
+          const paragraphs = [[]];
+          const addSeg = (text, type) => {
+            String(text).split(/\n+/).forEach((part, i) => {
+              if (i > 0) paragraphs.push([]);
+              if (part.trim()) paragraphs[paragraphs.length - 1].push({ t: part, type });
+            });
+          };
+          addSeg(ctxBefore, 'ctx');
+          addSeg(annotation.text, 'hl');
+          addSeg(ctxAfter, 'ctx');
+          const bodyHtml = paragraphs.filter((p) => p.length).map((p) => {
+            const spans = p.map((s, k) => {
+              const prev = p[k - 1];
+              const lead = prev && !/\s$/.test(prev.t) && !/^[\s,.;:!?)\]]/.test(s.t) ? ' ' : '';
+              return `${lead}<span style="${s.type === 'hl' ? '' : ''}${s.type === 'hl' ? hlSpanStyle : ctxStyle}">${esc(s.t)}</span>`;
+            }).join('');
+            return `<div class="pdf-para" style="margin: 0 0 10px 0; page-break-inside: avoid; break-inside: avoid;">${spans}</div>`;
+          }).join('');
 
           quoteEl.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 16px;">
@@ -1039,7 +1068,7 @@
               </span>
             </div>
             <div style="font-size: 15px; line-height: 1.8; color: #1e293b;">
-              ${beforeHtml}${hlHtml}${afterHtml}
+              ${bodyHtml}
             </div>
           `;
 
@@ -1049,7 +1078,7 @@
           const noteIndex = pageAnnotations.length;
 
           // PDF, sayfadan bağımsız offscreen belgede üretilip Drive'a yüklenir (sayfa içi üretim boş PDF veriyordu)
-          const pdfHtml = createPdfContainer([quoteEl], `${document.title} - ${hostname}`).outerHTML;
+          const pdfHtml = createPdfContainer([quoteEl], document.title.includes(hostname) ? document.title : `${document.title} - ${hostname}`).outerHTML;
           chrome.runtime.sendMessage({
             action: 'gdrive-render-upload',
             data: {
