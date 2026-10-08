@@ -1,4 +1,4 @@
-# WebMark & PDF Studio - Chrome Extension (Manifest V3)
+# MEDronom - WebHighlight - Chrome Extension (Manifest V3)
 
 Modern and powerful Chrome extension to highlight web text with custom colors, underline with straight or squiggly/wavy lines, modify typography, and export selected webpage sections to downloadable PDF.
 

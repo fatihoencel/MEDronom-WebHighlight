@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const annotationsList = document.getElementById('annotationsList');
   const emptyState = document.getElementById('emptyState');
 
+  // Ana görünüm <-> Ayarlar görünümü
+  const mainView = document.getElementById('mainView');
+  const settingsView = document.getElementById('settingsView');
+  function showSettings(on) {
+    settingsView.hidden = !on;
+    mainView.hidden = on;
+  }
+  document.getElementById('btnSettings').addEventListener('click', () => showSettings(settingsView.hidden));
+  document.getElementById('btnBack').addEventListener('click', () => showSettings(false));
+
   // Helper to send messages to active tab with auto-injection fallback
   function sendTabMessage(message, callback) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -30,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // If receiving end does not exist, inject content script on the fly
           chrome.scripting.executeScript({
             target: { tabId: currentTabId },
-            files: ['libs/html2pdf.bundle.min.js', 'content.js']
+            files: ['config.js', 'libs/html2pdf.bundle.min.js', 'content.js']
           }).then(() => {
             chrome.scripting.insertCSS({
               target: { tabId: currentTabId },
@@ -57,11 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response && Array.isArray(response.annotations)) {
         currentAnnotations = response.annotations;
         renderAnnotations(currentAnnotations);
+        const pickerLabel = btnTogglePicker.querySelector('.btn-label');
         if (response.isPickerActive) {
-          btnTogglePicker.textContent = "Bölge Seçiciyi Durdur";
+          pickerLabel.textContent = "Bölge Seçiciyi Durdur";
           btnTogglePicker.classList.add('active');
         } else {
-          btnTogglePicker.textContent = "Bölge Seçiciyi Başlat";
+          pickerLabel.textContent = "Bölge Seçiciyi Başlat";
           btnTogglePicker.classList.remove('active');
         }
       }
@@ -85,17 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemEl = document.createElement('div');
       itemEl.className = 'annotation-item';
 
-      let icon = '🖍️';
-      if (item.type === 'underline-solid') icon = '➖';
-      if (item.type === 'underline-wavy') icon = '〰️';
-      if (item.type === 'font') icon = '🔤';
+      const iconId = { 'underline-solid': 'i-underline', 'underline-wavy': 'i-wavy', font: 'i-font' }[item.type] || 'i-marker';
 
       itemEl.innerHTML = `
         <div class="annotation-item-left">
-          <span class="annotation-type-badge">${icon}</span>
+          <span class="annotation-type-badge"><svg class="sk"><use href="#${iconId}"/></svg></span>
           <span class="annotation-text" title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</span>
         </div>
-        <button class="annotation-del-btn" data-id="${item.id}" title="Vurgulamayı Sil">✕</button>
+        <button class="annotation-del-btn" data-id="${item.id}" title="Vurgulamayı Sil"><svg class="sk"><use href="#i-close"/></svg></button>
       `;
 
       itemEl.querySelector('.annotation-del-btn').addEventListener('click', (e) => {
@@ -179,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleDriveSync = document.getElementById('toggleDriveSync');
   const driveDetails = document.getElementById('driveDetails');
   const btnDriveAuth = document.getElementById('btnDriveAuth');
+  const btnTestDrive = document.getElementById('btnTestDrive');
+  const btnDriveLogout = document.getElementById('btnDriveLogout');
   const driveUserEmail = document.getElementById('driveUserEmail');
   const driveStatusText = document.getElementById('driveStatusText');
   const inputClientId = document.getElementById('inputClientId');
@@ -207,85 +217,275 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // Google Drive & Webhook Setup
+  // =========================================================================
+
+  const inputWebhookUrl = document.getElementById('inputWebhookUrl');
+  const btnSaveWebhook = document.getElementById('btnSaveWebhook');
+  const inputTargetFolder = document.getElementById('inputTargetFolder');
+  const btnSaveTargetFolder = document.getElementById('btnSaveTargetFolder');
+  const btnTestWebhook = document.getElementById('btnTestWebhook');
+  const btnToggleGuide = document.getElementById('btnToggleGuide');
+  const webhookGuideBox = document.getElementById('webhookGuideBox');
+  const btnCopyScriptCode = document.getElementById('btnCopyScriptCode');
+
+
+  const APPS_SCRIPT_CODE = `// WebMark PDF Studio - Google Drive Kalıcı Webhook
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    
+    // 1. Hedef Klasörü Belirle (Özel Klasör Linki/ID'si veya varsayılan WebMark)
+    let targetFolder;
+    let customFolderId = (data.folderId || "").trim();
+    
+    // Link formatından ID ayıkla (örn: https://drive.google.com/drive/folders/1leiiBdzii...)
+    const folderMatch = customFolderId.match(/folders\\/([a-zA-Z0-9_-]+)/);
+    if (folderMatch) {
+      customFolderId = folderMatch[1];
+    }
+    
+    if (customFolderId) {
+      targetFolder = DriveApp.getFolderById(customFolderId);
+    } else {
+      const defaultFolders = DriveApp.getFoldersByName("WebMark");
+      if (defaultFolders.hasNext()) {
+        targetFolder = defaultFolders.next();
+      } else {
+        targetFolder = DriveApp.createFolder("WebMark");
+      }
+    }
+
+    // 2. Site adına göre alt klasör oluştur/bul
+    let saveFolder = targetFolder;
+    const siteName = (data.siteName || "Genel").trim();
+    if (siteName) {
+      const subFolders = saveFolder.getFoldersByName(siteName);
+      if (subFolders.hasNext()) {
+        saveFolder = subFolders.next();
+      } else {
+        saveFolder = saveFolder.createFolder(siteName);
+      }
+    }
+
+    // 3. Base64 PDF'i çöz ve dosyayı oluştur
+    const decodedBytes = Utilities.base64Decode(data.pdfBase64);
+    const fileName = data.fileName || ("Not_" + new Date().getTime() + ".pdf");
+    const blob = Utilities.newBlob(decodedBytes, "application/pdf", fileName);
+    const file = saveFolder.createFile(blob);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      fileId: file.getId(),
+      fileName: file.getName(),
+      folder: targetFolder.getName() + "/" + siteName,
+      fileUrl: file.getUrl()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    message: "WebMark PDF Webhook Hazır ve Çalışıyor!"
+  })).setMimeType(ContentService.MimeType.JSON);
+}`;
+
   function initDriveStatus() {
-    chrome.storage.local.get(['gdrive_client_id'], (res) => {
-      if (res && res.gdrive_client_id) {
-        inputClientId.value = res.gdrive_client_id;
+    chrome.storage.local.get(['gdrive_webhook_url', 'gdrive_target_folder', 'gdrive_client_id', 'gdrive_auto_sync'], (res) => {
+      const webhook = (res && res.gdrive_webhook_url) || (typeof WEBMARK_CONFIG !== 'undefined' ? WEBMARK_CONFIG.WEBHOOK_URL : '');
+      const folder = (res && res.gdrive_target_folder) || (typeof WEBMARK_CONFIG !== 'undefined' ? WEBMARK_CONFIG.TARGET_FOLDER : '');
+
+      if (inputWebhookUrl && webhook) inputWebhookUrl.value = webhook;
+      if (inputTargetFolder && folder) inputTargetFolder.value = folder;
+      if (inputClientId && res && res.gdrive_client_id) inputClientId.value = res.gdrive_client_id;
+
+      const driveFolderLink = document.getElementById('driveFolderLink');
+      if (driveFolderLink && folder) {
+        let folderUrl = folder.trim();
+        if (!folderUrl.startsWith('http')) {
+          folderUrl = `https://drive.google.com/drive/folders/${folderUrl}`;
+        }
+        driveFolderLink.href = folderUrl;
       }
     });
 
     chrome.runtime.sendMessage({ action: 'gdrive-status' }, (res) => {
       if (res) {
-        toggleDriveSync.checked = res.autoSync;
-        driveDetails.style.display = res.autoSync ? 'flex' : 'none';
+        if (toggleDriveSync) {
+          toggleDriveSync.checked = res.autoSync;
+          if (driveDetails) {
+            driveDetails.classList.toggle('is-disabled', !res.autoSync);
+          }
+        }
 
-        if (res.connected && res.email) {
-          btnDriveAuth.textContent = 'Bağlandı ✓';
-          btnDriveAuth.classList.add('connected');
-          driveUserEmail.textContent = res.email;
-          driveStatusText.textContent = `Otomatik senkronizasyon açık (${res.email})`;
+        if (res.isWebhook) {
+          if (driveStatusText) driveStatusText.textContent = 'Notlar otomatik olarak klasörünüze aktarılır.';
+        } else if (res.connected && res.email) {
+          if (driveStatusText) driveStatusText.textContent = `OAuth ile bağlı (${res.email}).`;
+          if (btnDriveAuth) {
+            btnDriveAuth.textContent = 'Bağlandı ✓';
+            btnDriveAuth.classList.add('connected');
+          }
+          if (btnDriveLogout) btnDriveLogout.style.display = 'inline-block';
         } else {
-          btnDriveAuth.textContent = 'Google ile Bağlan';
-          btnDriveAuth.classList.remove('connected');
-          driveUserEmail.textContent = 'Bağlı değil';
-          driveStatusText.textContent = 'Altını çizdiğiniz her şey PDF olarak Drive\'a yüklenir.';
+          if (driveStatusText) driveStatusText.textContent = 'Notlar doğrudan hedef Drive klasörünüze aktarılır.';
         }
       }
     });
   }
 
-  btnSaveClientId.addEventListener('click', () => {
-    const val = inputClientId.value.trim();
-    if (!val) {
-      alert('Lütfen geçerli bir Google Client ID girin.');
-      return;
-    }
-    chrome.storage.local.set({ gdrive_client_id: val }, () => {
-      btnSaveClientId.textContent = 'Kaydedildi ✓';
-      setTimeout(() => { btnSaveClientId.textContent = 'Kaydet'; }, 2000);
+  // Save Webhook URL
+  if (btnSaveWebhook && inputWebhookUrl) {
+    btnSaveWebhook.addEventListener('click', () => {
+      const url = inputWebhookUrl.value.trim();
+      if (!url) {
+        alert('Lütfen geçerli bir Google Apps Script Webhook URL girin (https://script.google.com/macros/s/.../exec)');
+        return;
+      }
+      chrome.storage.local.set({ gdrive_webhook_url: url, gdrive_auto_sync: true }, () => {
+        btnSaveWebhook.textContent = 'Kaydedildi ✓';
+        if (toggleDriveSync) toggleDriveSync.checked = true;
+        setTimeout(() => { btnSaveWebhook.textContent = 'Kaydet'; }, 2000);
+        initDriveStatus();
+      });
     });
-  });
+  }
 
-  linkClientIdHelp.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.tabs.create({
-      url: 'https://console.cloud.google.com/apis/credentials'
+  // Save Target Folder
+  if (btnSaveTargetFolder && inputTargetFolder) {
+    btnSaveTargetFolder.addEventListener('click', () => {
+      const folderVal = inputTargetFolder.value.trim();
+      chrome.storage.local.set({ gdrive_target_folder: folderVal }, () => {
+        btnSaveTargetFolder.textContent = 'Kaydedildi ✓';
+        setTimeout(() => { btnSaveTargetFolder.textContent = 'Kaydet'; }, 2000);
+      });
     });
-  });
+  }
 
-  toggleDriveSync.addEventListener('change', (e) => {
-    const isEnabled = e.target.checked;
-    driveDetails.style.display = isEnabled ? 'flex' : 'none';
-    chrome.storage.local.set({ gdrive_auto_sync: isEnabled });
-
-    if (isEnabled) {
-      // Check if user is logged in
-      chrome.runtime.sendMessage({ action: 'gdrive-status' }, (res) => {
-        if (!res || !res.connected) {
-          // Trigger connect
-          btnDriveAuth.click();
+  // Test Webhook Connection
+  if (btnTestWebhook) {
+    btnTestWebhook.addEventListener('click', () => {
+      const testLabel = btnTestWebhook.querySelector('.btn-label');
+      testLabel.textContent = 'Test ediliyor...';
+      chrome.runtime.sendMessage({ action: 'gdrive-test-connection' }, (res) => {
+        testLabel.textContent = 'Test Et';
+        if (res && res.success) {
+          alert('✅ ' + res.message);
+        } else {
+          alert('❌ Bağlantı Testi Başarısız: ' + (res?.error || 'Lütfen Webhook URL adresinizi kontrol edin.'));
         }
       });
-    }
-  });
+    });
+  }
 
-  btnDriveAuth.addEventListener('click', () => {
-    btnDriveAuth.textContent = 'Bağlanıyor...';
-    chrome.runtime.sendMessage({ action: 'gdrive-auth' }, (res) => {
-      if (res && res.success) {
-        btnDriveAuth.textContent = 'Bağlandı ✓';
-        btnDriveAuth.classList.add('connected');
-        driveUserEmail.textContent = res.email || 'Hesap Bağlandı';
-        chrome.storage.local.set({ gdrive_auto_sync: true });
-        toggleDriveSync.checked = true;
-        driveDetails.style.display = 'flex';
-      } else {
-        btnDriveAuth.textContent = 'Tekrar Dene';
-        btnDriveAuth.classList.remove('connected');
-        alert('Google Drive bağlantı hatası: ' + (res?.error || 'Yetkilendirme yapılamadı'));
+  // Toggle Setup Guide Box
+  if (btnToggleGuide && webhookGuideBox) {
+    btnToggleGuide.addEventListener('click', () => {
+      const isHidden = webhookGuideBox.style.display === 'none';
+      webhookGuideBox.style.display = isHidden ? 'block' : 'none';
+    });
+  }
+
+  // Copy Script Code
+  if (btnCopyScriptCode) {
+    btnCopyScriptCode.addEventListener('click', () => {
+      navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(() => {
+        btnCopyScriptCode.textContent = 'Kopyalandı ✓ (Şimdi script.google.com içine yapıştırın)';
+        setTimeout(() => {
+          btnCopyScriptCode.textContent = '📋 Google Apps Script Kodunu Kopyala';
+        }, 3000);
+      });
+    });
+  }
+
+  // Auto Sync Toggle
+  if (toggleDriveSync) {
+    toggleDriveSync.addEventListener('change', (e) => {
+      const isEnabled = e.target.checked;
+      chrome.storage.local.set({ gdrive_auto_sync: isEnabled });
+      if (driveStatusText) {
+        driveStatusText.textContent = isEnabled
+          ? 'Notlar otomatik olarak klasörünüze aktarılır.'
+          : 'Otomatik Drive kaydı duraklatıldı.';
+      }
+      if (driveDetails) {
+        driveDetails.classList.toggle('is-disabled', !isEnabled);
       }
     });
-  });
+  }
+
+  // Open Drive Folder Link directly
+  const driveFolderLink = document.getElementById('driveFolderLink');
+  if (driveFolderLink) {
+    driveFolderLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (driveFolderLink.href && !driveFolderLink.href.endsWith('#')) {
+        chrome.tabs.create({ url: driveFolderLink.href });
+      }
+    });
+  }
+
+  // Legacy OAuth Client ID Save
+  if (btnSaveClientId && inputClientId) {
+    btnSaveClientId.addEventListener('click', () => {
+      const val = inputClientId.value.trim();
+      if (!val) {
+        alert('Lütfen geçerli bir Google Client ID girin.');
+        return;
+      }
+      chrome.storage.local.set({ gdrive_client_id: val }, () => {
+        btnSaveClientId.textContent = 'Kaydedildi ✓';
+        setTimeout(() => { btnSaveClientId.textContent = 'Kaydet'; }, 2000);
+      });
+    });
+  }
+
+  // Legacy OAuth Connect
+  if (btnDriveAuth && inputClientId) {
+    btnDriveAuth.addEventListener('click', () => {
+      const clientId = inputClientId.value.trim();
+      if (!clientId) {
+        alert('Lütfen önce Client ID girin.');
+        inputClientId.focus();
+        return;
+      }
+      chrome.storage.local.set({ gdrive_client_id: clientId });
+      btnDriveAuth.textContent = 'Bağlanıyor...';
+      chrome.runtime.sendMessage({ action: 'gdrive-auth' }, (res) => {
+        if (res && res.success) {
+          btnDriveAuth.textContent = 'Bağlandı ✓';
+          btnDriveAuth.classList.add('connected');
+          if (btnDriveLogout) btnDriveLogout.style.display = 'inline-block';
+          chrome.storage.local.set({ gdrive_auto_sync: true });
+          if (toggleDriveSync) toggleDriveSync.checked = true;
+          initDriveStatus();
+        } else {
+          btnDriveAuth.textContent = 'OAuth ile Bağlan';
+          btnDriveAuth.classList.remove('connected');
+          alert('OAuth hatası: ' + (res?.error || 'Yetkilendirme yapılamadı'));
+        }
+      });
+    });
+  }
+
+  // Legacy OAuth Logout
+  if (btnDriveLogout) {
+    btnDriveLogout.addEventListener('click', () => {
+      if (confirm('Google Drive bağlantısını kesmek istediğinize emin misiniz?')) {
+        chrome.runtime.sendMessage({ action: 'gdrive-disconnect' }, () => {
+          initDriveStatus();
+        });
+      }
+    });
+  }
 
   // Listen for background updates
   chrome.runtime.onMessage.addListener((msg) => {

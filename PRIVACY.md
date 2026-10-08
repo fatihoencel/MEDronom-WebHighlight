@@ -1,14 +1,14 @@
-# Privacy Policy for WebMark & PDF Studio
+# Privacy Policy for MEDronom - WebHighlight
 
 **Last Updated:** October 7, 2026
 
-**WebMark & PDF Studio** ("the Extension", "we", "our", or "us") is committed to protecting your privacy. This Privacy Policy outlines how our Google Chrome Extension handles and protects your data.
+**MEDronom - WebHighlight** ("the Extension", "we", "our", or "us") is committed to protecting your privacy. This Privacy Policy outlines how our Google Chrome Extension handles and protects your data.
 
 ---
 
 ## 1. Overview and Core Philosophy
 
-WebMark & PDF Studio is designed with a **privacy-first, client-side** architecture. We do not operate remote tracking servers, databases, or analytics engines. All highlighting, PDF generation, and styling operations are processed locally inside your browser.
+MEDronom - WebHighlight is designed with a **privacy-first, client-side** architecture. We do not operate remote tracking servers, databases, or analytics engines. All highlighting, PDF generation, and styling operations are processed locally inside your browser.
 
 ---
 
@@ -20,7 +20,7 @@ WebMark & PDF Studio is designed with a **privacy-first, client-side** architect
 - **Who has access:** Only you. We do not transmit your highlighted notes, web history, or reading lists to any third party.
 
 ### B. Google Drive Integration (OAuth 2.0)
-- **What is accessed:** The extension requests permission to upload generated PDF documents directly to your own Google Drive folder (`Drive'ım -> Uygulama verileri -> MEDronom Web Highlighter`).
+- **What is accessed:** The extension requests permission to upload generated PDF documents directly to your own Google Drive folder (`Drive'ım -> WebMark -> [Site-URL]`).
 - **Authorization:** Authentication is handled securely via official Google OAuth 2.0 (`https://www.googleapis.com/auth/drive.file`).
 - **Scope limitation:** The extension only has access to files and folders created by itself. It **cannot** read, modify, or delete any other files in your personal Google Drive.
 - **Data flow:** PDF files created from your highlighted quotes are sent directly from your browser to Google Drive API endpoints (`googleapis.com`). No intermediary servers are involved.
@@ -55,7 +55,7 @@ All data communication between the extension and Google Drive occurs exclusively
 
 ## 6. Open Source and Transparency
 
-WebMark & PDF Studio is built transparently. Users can inspect the open-source codebase to verify that our permissions and storage strictly adhere to this Privacy Policy.
+MEDronom - WebHighlight is built transparently. Users can inspect the open-source codebase to verify that our permissions and storage strictly adhere to this Privacy Policy.
 
 ---
 

@@ -1,4 +1,4 @@
-# 🌟 WebMark & PDF Studio - Kullanım Kılavuzu
+# 🌟 MEDronom - WebHighlight - Kullanım Kılavuzu
 
 Masaüstünüzde oluşturulan **`WebMark-PDF-Studio`** klasörü, Google Chrome için hazırlanmış modern ve tam donanımlı bir **Manifest V3** tarayıcı uzantısıdır.
 
@@ -64,26 +64,69 @@ Masaüstünüzde oluşturulan **`WebMark-PDF-Studio`** klasörü, Google Chrome 
 
 ---
 
-### ☁️ E. Otomatik Google Drive PDF Senkronizasyonu (Yeni!)
-Altını çizdiğiniz veya vurguladığınız her içerik anında site adına göre Google Drive'da klasörlenir ve PDF formatında buluta kaydedilir:
+### ☁️ E. Google Drive Kalıcı Klasör Kaydı (Google Apps Script Webhook)
+OAuth oturum süresi dolma ve Google Cloud karmaşası olmadan, notlarınızın **sonsuza dek kalıcı olarak istediğiniz Google Drive klasörüne** aktarılmasını sağlayan zahmetsiz yöntem:
 
-#### 1 Dakikalık Kurulum (Client ID):
-Google, yerel olarak geliştirilen eklentilerde güvenlik gereği ücretsiz bir **OAuth Client ID** istemektedir:
-1. [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials) sayfasına gidin (Google hesabınızla giriş yapın).
-2. **"Kimlik Bilgisi Oluştur" (Create Credentials)** > **"OAuth İstemci Kimliği" (OAuth client ID)** seçeneğine tıklayın.
-3. Uygulama türünü **"Web Uygulaması" (Web application)** seçin.
-4. **"Yetkilendirilmiş yönlendirme URI'leri"** kısmına `https://` ile başlayan yönlendirme adresinizi veya `https://chromiumapp.org` ekleyin.
-5. Oluşturulan **Client ID** metnini (örneğin: `123456789-abc.apps.googleusercontent.com`) kopyalayın.
-6. WebMark eklentisi popup penceresinde **Google Cloud Client ID** alanına yapıştırıp **"Kaydet"** butonuna basın.
-7. **"Google ile Bağlan"** diyerek tek tıkla hesabınızı yetkilendirin!
+#### ⚡ 1 Dakikalık Kurulum:
+1. [script.google.com](https://script.google.com/home/start) adresini açıp **"Yeni Proje"** butonuna tıklayın.
+2. Editördeki mevcut kodları silin.
+3. WebMark eklenti penceresini açıp **"📋 Kurulum Kodu & Kılavuz"** > **"📋 Google Apps Script Kodunu Kopyala"** butonuna basın (veya aşağıdaki kodu yapıştırın):
+```javascript
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    let targetFolder;
+    let customFolderId = (data.folderId || "").trim();
+    const folderMatch = customFolderId.match(/folders\/([a-zA-Z0-9_-]+)/);
+    if (folderMatch) customFolderId = folderMatch[1];
+    
+    if (customFolderId) {
+      targetFolder = DriveApp.getFolderById(customFolderId);
+    } else {
+      const defaultFolders = DriveApp.getFoldersByName("WebMark");
+      targetFolder = defaultFolders.hasNext() ? defaultFolders.next() : DriveApp.createFolder("WebMark");
+    }
 
----
+    let saveFolder = targetFolder;
+    const siteName = (data.siteName || "Genel").trim();
+    if (siteName) {
+      const sub = saveFolder.getFoldersByName(siteName);
+      saveFolder = sub.hasNext() ? sub.next() : saveFolder.createFolder(siteName);
+    }
 
-#### 🌟 Otomatik Kayıt Akışı:
-* Artık herhangi bir web sayfasında bir metni vurguladığınızda veya altını çizdiğinizde:
-  - Hiçbir indirme penceresi açılmaz.
-  - Google Drive'ınızda `WebMark / [Site-İsmi]` klasörü altında (örneğin: `WebMark / medium.com / Makale_Notu.pdf`) otomatik oluşturulup sessizce buluta yüklenir.
-  - Sayfanın sağ üstünde anında **"Drive'a kaydedildi ☁️"** bildirimi görüntülenir.
+    const decoded = Utilities.base64Decode(data.pdfBase64);
+    const blob = Utilities.newBlob(decoded, "application/pdf", data.fileName || "Not.pdf");
+    const file = saveFolder.createFile(blob);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      fileId: file.getId(),
+      fileName: file.getName(),
+      folder: targetFolder.getName() + "/" + siteName
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "WebMark PDF Webhook Hazır ve Çalışıyor!" })).setMimeType(ContentService.MimeType.JSON);
+}
+```
+4. Projeyi kaydedin (**`Cmd + S`** veya 💾 ikonu).
+5. Sağ üstteki mavi **"Dağıt" (Deploy)** butonuna basıp **"Yeni dağıtım"** seçin.
+6. Sol dişli çark simgesinden **"Web uygulaması"** seçin.
+7. **Erişimi olanlar (Who has access)** ayarını **"Herkes" (Anyone)** yapın ve **Dağıt**'a tıklayın.
+8. Verilen `https://script.google.com/macros/s/.../exec` linkini kopyalayıp eklenti penceresindeki **Webhook URL** alanına yapıştırın ve **Kaydet**'e basın!
+
+#### 📁 İstediğiniz Özel Klasörü Bağlama:
+- Google Drive'ınızda notların gitmesini istediğiniz klasörü açın.
+- Tarayıcınızın adres çubuğundaki linki (örn: `https://drive.google.com/drive/folders/1leiiBdziiZGqs2CY...`) kopyalayın.
+- Eklenti penceresindeki **"Hedef Drive Klasörü"** kutusuna yapıştırıp **Kaydet**'e basın.
+- Artık aldığınız her not **doğrudan o klasörünüzün içine** (ve altında site adına özel alt klasörle) kaydedilir!
+
+#### ⚡ Bağlantıyı Doğrulama:
+- Eklenti penceresindeki **"⚡ Bağlantıyı Test Et"** butonuna basarak sistemin hazır olduğunu teyit edebilirsiniz.
 
 ---
 
