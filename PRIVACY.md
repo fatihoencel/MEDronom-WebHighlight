@@ -1,73 +1,48 @@
 # Privacy Policy for MEDronom - WebHighlight
 
-**Last Updated:** October 7, 2026
+**Last Updated:** October 9, 2026
 
-**MEDronom - WebHighlight** ("the Extension", "we", "our", or "us") is committed to protecting your privacy. This Privacy Policy outlines how our Google Chrome Extension handles and protects your data.
+MEDronom - WebHighlight ("the Extension") lets you highlight and underline text on web pages and save the parts you choose as PDF files. This policy explains what data the Extension handles. The developer does not operate any server and **receives no data from you**.
 
----
+## 1. Data the Extension handles
 
-## 1. Overview and Core Philosophy
+**Highlights (stored locally).** When you highlight or underline text, the Extension stores the selected text, its color and style, a short piece of surrounding text, and the page address in `chrome.storage.local` on your device. This lets your highlights reappear when you reopen the page. You can delete them at any time from the extension popup ("Hepsini Temizle"); uninstalling the Extension removes all local data.
 
-MEDronom - WebHighlight is designed with a **privacy-first, client-side** architecture. We do not operate remote tracking servers, databases, or analytics engines. All highlighting, PDF generation, and styling operations are processed locally inside your browser.
+**Optional Google Drive saving (off unless you set it up).** If you enter your own Google Apps Script web app address and turn on Drive saving in Settings, then for each highlight the Extension creates a PDF in your browser (the highlighted text, a few lines before it and the sentence after it, page title and address) and sends it to **your own** Apps Script address. That script, which you own, saves the PDF into **your** Google Drive folder. The data travels only between your browser and your own Google account (script.google.com) over HTTPS. Nothing is sent to the developer or any third party. If you do not set this up, no data leaves your browser.
 
----
+## 2. What we do not do
 
-## 2. Information We Handle and How It Is Used
+- We do not sell, rent or share user data, and do not use it for advertising, credit or any unrelated purpose.
+- We do not collect your name, email, IP address, browsing history or passwords, and include no analytics, tracking or advertising code.
+- We do not load or run remote code. The PDF library is bundled inside the Extension.
 
-### A. Local Annotations & Highlighting
-- **What is processed:** The text you select, highlights (colors), underlines, and custom font preferences.
-- **Where it is stored:** Stored strictly locally on your device using `chrome.storage.local`.
-- **Who has access:** Only you. We do not transmit your highlighted notes, web history, or reading lists to any third party.
-
-### B. Google Drive Integration (OAuth 2.0)
-- **What is accessed:** The extension requests permission to upload generated PDF documents directly to your own Google Drive folder (`Drive'ım -> WebMark -> [Site-URL]`).
-- **Authorization:** Authentication is handled securely via official Google OAuth 2.0 (`https://www.googleapis.com/auth/drive.file`).
-- **Scope limitation:** The extension only has access to files and folders created by itself. It **cannot** read, modify, or delete any other files in your personal Google Drive.
-- **Data flow:** PDF files created from your highlighted quotes are sent directly from your browser to Google Drive API endpoints (`googleapis.com`). No intermediary servers are involved.
-
----
-
-## 3. Permissions Justification
+## 3. Permissions and why they are needed
 
 | Permission | Purpose |
 | :--- | :--- |
-| `storage` | To save your highlights, notes, and preferences locally in your browser. |
-| `activeTab` / `<all_urls>` | To allow text selection, highlighting, and PDF capture on the active web page you choose. |
-| `contextMenus` | To provide quick right-click options for highlighting and PDF export. |
-| `identity` | To facilitate direct, secure authentication with your Google Drive account. |
-| `scripting` | To render the floating highlighter toolbar and interactive area picker on web pages. |
+| `storage` | Save your highlights, settings and the on/off state of the highlight switches locally. |
+| `activeTab` | Act on the page you are using when you open the popup or use a shortcut. |
+| `contextMenus` | Offer highlight, underline and PDF options in the right-click menu. |
+| `offscreen` | Create PDF files in a clean background document (a DOM and canvas are required). |
+| Content script on all pages | Highlight tools must work on any page you open. The Extension only reads the text you select and a few surrounding lines. |
+| Host access to `script.google.com` and `script.googleusercontent.com` | Only for the optional Google Drive saving described above. |
 
----
+## 4. Security
 
-## 4. Third-Party Sharing and Data Selling
+All communication with Google happens over encrypted HTTPS connections. The Extension stores no passwords and requests no Google account permissions.
 
-- We **DO NOT** sell, rent, monetize, or trade any user data.
-- We **DO NOT** collect personal identifiable information (PII) such as your name, email address, IP address, or passwords.
-- We **DO NOT** inject advertisements or use tracking pixels/cookies.
+## 5. Changes to this policy
 
----
+Updates are published in this repository with a new revision date.
 
-## 5. Security of Your Data
+## 6. Contact
 
-All data communication between the extension and Google Drive occurs exclusively over encrypted HTTPS connections directly to Google Cloud services. Your OAuth tokens are stored securely within Chrome's identity subsystem.
-
----
-
-## 6. Open Source and Transparency
-
-MEDronom - WebHighlight is built transparently. Users can inspect the open-source codebase to verify that our permissions and storage strictly adhere to this Privacy Policy.
-
----
-
-## 7. Changes to This Privacy Policy
-
-We may update this Privacy Policy from time to time. Any modifications will be posted to this repository with an updated revision date.
-
----
-
-## 8. Contact
-
-If you have questions or feedback regarding this Privacy Policy, you can open an issue on the GitHub repository or contact the developer directly:
 - **Developer:** Fatih Öncel
 - **Email:** fatihoencel@gmail.com
 - **Repository:** https://github.com/fatihoencel/MEDronom-WebHighlight
+
+---
+
+## Gizlilik Özeti (Türkçe)
+
+MEDronom - WebHighlight, vurgularınızı yalnızca tarayıcınızda (`chrome.storage.local`) saklar. Geliştiriciye veri gönderilmez; reklam, analiz veya izleme yoktur; uzaktan kod çalıştırılmaz. İsteğe bağlı Google Drive kaydını **siz** kendi Apps Script adresinizi girerek açarsınız: bu durumda PDF yalnızca sizin Google hesabınızdaki klasöre gider. Kapalıyken hiçbir veri tarayıcınızdan çıkmaz. Vurguları popup'tan silebilir, eklentiyi kaldırarak tüm yerel verileri silebilirsiniz.

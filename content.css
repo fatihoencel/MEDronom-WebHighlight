@@ -456,7 +456,7 @@ body.webmark-picker-active {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(238, 249, 243, 0.98);
   backdrop-filter: blur(12px);
   border: 2px solid rgba(143, 221, 187, 0.45);
   border-radius: 12px 10px 13px 10px / 10px 13px 10px 12px;

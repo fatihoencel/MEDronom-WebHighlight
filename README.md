@@ -20,3 +20,8 @@ Modern and powerful Chrome extension to highlight web text with custom colors, u
 - `popup.html`, `popup.css`, `popup.js`: Dashboard to manage page annotations, trigger picker mode, or export data.
 - `libs/html2pdf.bundle.min.js`: Open-source client-side PDF renderer (jsPDF + html2canvas).
 - `test-page.html`: Interactive local sandbox page to immediately test all features.
+
+## Kurulum notu (geliştiriciler için)
+`config.js` dosyası `.gitignore`'dadır. Depoyu klonladıktan sonra `config.example.js` dosyasını `config.js` olarak kopyalayın.
+Drive kaydı isteğe bağlıdır; webhook adresini `config.js`'e ya da eklentinin Ayarlar bölümüne girebilirsiniz.
+Mağaza metinleri ve izin gerekçeleri için `STORE-LISTING.md` dosyasına bakın.

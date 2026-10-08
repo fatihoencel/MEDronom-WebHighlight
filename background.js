@@ -34,228 +34,6 @@ chrome.runtime.onStartup.addListener(() => {
   syncConfigToStorage();
 });
 
-const DRIVE_SCOPES = [
-  'https://www.googleapis.com/auth/drive.file'
-];
-
-let cachedAuthToken = null;
-
-// =========================================================================
-// Google Drive API Helpers
-// =========================================================================
-
-// Get OAuth Token using chrome.identity
-async function getAuthToken(interactive = false) {
-  return new Promise((resolve, reject) => {
-    // If token exists and works
-    if (cachedAuthToken) {
-      resolve(cachedAuthToken);
-      return;
-    }
-
-    chrome.identity.getAuthToken({ interactive }, (token) => {
-      if (chrome.runtime.lastError || !token) {
-        // Fallback for unpacked extension or when manifest oauth2 is not pre-registered:
-        // Use launchWebAuthFlow with standard Google OAuth2
-        getAuthTokenViaWebFlow(interactive).then(resolve).catch(reject);
-      } else {
-        cachedAuthToken = token;
-        resolve(token);
-      }
-    });
-  });
-}
-
-// OAuth Flow via chrome.identity.launchWebAuthFlow with silent renewal
-async function getAuthTokenViaWebFlow(interactive = true) {
-  const stored = await chrome.storage.local.get(['gdrive_access_token', 'gdrive_user_email', 'gdrive_client_id']);
-  
-  if (stored.gdrive_access_token) {
-    // Validate stored token with Google tokeninfo
-    try {
-      const checkRes = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${stored.gdrive_access_token}`);
-      if (checkRes.ok) {
-        cachedAuthToken = stored.gdrive_access_token;
-        return stored.gdrive_access_token;
-      }
-    } catch (e) {
-      // Network issue or offline - assume token is temporarily usable
-      cachedAuthToken = stored.gdrive_access_token;
-      return stored.gdrive_access_token;
-    }
-    // Token is expired. Don't immediately wipe settings; try silent renewal below
-    cachedAuthToken = null;
-  }
-
-  // Check if client ID is configured
-  const clientId = stored.gdrive_client_id ? stored.gdrive_client_id.trim() : '';
-  if (!clientId) {
-    throw new Error('Lütfen önce eklenti menüsünden geçerli bir Google Client ID kaydedin.');
-  }
-
-  const redirectUri = chrome.identity.getRedirectURL();
-
-  // Helper to execute launchWebAuthFlow
-  const runAuthFlow = (isInteractive) => {
-    const promptVal = isInteractive ? 'consent' : 'none';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${encodeURIComponent(clientId)}&` +
-      `response_type=token&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email')}&` +
-      `prompt=${promptVal}`;
-
-    return new Promise((resolve, reject) => {
-      chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: isInteractive }, (responseUrl) => {
-        if (chrome.runtime.lastError || !responseUrl) {
-          reject(new Error(chrome.runtime.lastError?.message || 'Yetkilendirme yapılamadı'));
-          return;
-        }
-
-        try {
-          const urlObj = new URL(responseUrl);
-          const hashStr = urlObj.hash.startsWith('#') ? urlObj.hash.substring(1) : urlObj.hash;
-          const params = new URLSearchParams(hashStr);
-          const accessToken = params.get('access_token');
-          if (accessToken) {
-            cachedAuthToken = accessToken;
-            chrome.storage.local.set({ gdrive_access_token: accessToken, gdrive_auto_sync: true });
-            
-            // Fetch user email
-            fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            }).then(r => r.json()).then(u => {
-              if (u.email) {
-                chrome.storage.local.set({ gdrive_user_email: u.email });
-              }
-            }).catch(() => {});
-
-            resolve(accessToken);
-          } else {
-            const err = params.get('error') || 'Access token bulunamadı';
-            reject(new Error(`OAuth Hatası: ${err}`));
-          }
-        } catch (parseErr) {
-          reject(new Error('Yönlendirme ayrıştırma hatası: ' + parseErr.message));
-        }
-      });
-    });
-  };
-
-  // If interactive is requested, open dialog directly
-  if (interactive) {
-    return await runAuthFlow(true);
-  }
-
-  // Background non-interactive: try silent renewal first
-  try {
-    return await runAuthFlow(false);
-  } catch (silentErr) {
-    console.warn('[WebMark] Silent token renewal failed:', silentErr.message);
-    throw new Error('Google Drive oturum süresi dolmuş. Lütfen eklenti simgesinden tekrar bağlanın.');
-  }
-}
-
-// Find or Create Folder in Google Drive
-async function getOrCreateFolder(token, folderName, parentId = null) {
-  let query = `mimeType='application/vnd.google-apps.folder' and name='${folderName.replace(/'/g, "\\'")}' and trashed=false`;
-  if (parentId) {
-    query += ` and '${parentId}' in parents`;
-  } else {
-    query += ` and 'root' in parents`;
-  }
-
-  const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  if (!searchRes.ok) {
-    const errText = await searchRes.text();
-    throw new Error(`Klasör sorgulama hatası (${searchRes.status}): ${errText}`);
-  }
-
-  const searchData = await searchRes.json();
-  if (searchData.files && searchData.files.length > 0) {
-    return searchData.files[0].id;
-  }
-
-  // Create folder
-  const metadata = {
-    name: folderName,
-    mimeType: 'application/vnd.google-apps.folder'
-  };
-  if (parentId) {
-    metadata.parents = [parentId];
-  }
-
-  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(metadata)
-  });
-
-  if (!createRes.ok) {
-    const errText = await createRes.text();
-    throw new Error(`Klasör oluşturma hatası (${createRes.status}): ${errText}`);
-  }
-
-  const createData = await createRes.json();
-  if (!createData.id) {
-    throw new Error('Klasör oluşturuldu ancak klasör ID alınamadı');
-  }
-  return createData.id;
-}
-
-// Upload PDF binary / base64 directly to Drive folder
-async function uploadPdfToDrive(token, folderId, fileName, pdfBase64) {
-  const metadata = {
-    name: fileName,
-    parents: [folderId],
-    mimeType: 'application/pdf'
-  };
-
-  const boundary = '-------314159265358979323846';
-  const delimiter = "\r\n--" + boundary + "\r\n";
-  const closeDelim = "\r\n--" + boundary + "--";
-
-  // Decode Base64 to Uint8Array
-  const byteChars = atob(pdfBase64);
-  const byteNumbers = new Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) {
-    byteNumbers[i] = byteChars.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-
-  const multipartRequestBody = new Blob([
-    delimiter,
-    'Content-Type: application/json; charset=UTF-8\r\n\r\n',
-    JSON.stringify(metadata),
-    delimiter,
-    'Content-Type: application/pdf\r\n',
-    'Content-Transfer-Encoding: binary\r\n\r\n',
-    byteArray,
-    closeDelim
-  ], { type: 'multipart/related; boundary=' + boundary });
-
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: multipartRequestBody
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`PDF yükleme hatası (${res.status}): ${errText}`);
-  }
-
-  return await res.json();
-}
-
 // Process automatic Drive sync for highlighted note / PDF
 async function handleDrivePdfSync({ siteName, title, pageUrl, pdfBase64, noteText, noteIndex, totalNotes }) {
   try {
@@ -308,12 +86,8 @@ async function handleDrivePdfSync({ siteName, title, pageUrl, pdfBase64, noteTex
       }
     }
 
-    // 2. Fallback: Google OAuth API
-    const token = await getAuthToken(false);
-    const rootFolderId = await getOrCreateFolder(token, 'WebMark');
-    const siteFolderId = await getOrCreateFolder(token, cleanSiteName, rootFolderId);
-    const result = await uploadPdfToDrive(token, siteFolderId, fileName, pdfBase64);
-    return { success: true, fileId: result.id, folder: `WebMark/${cleanSiteName}`, fileName };
+    // Webhook tanımlı değilse Drive'a gönderilemez
+    return { success: false, error: 'Drive bağlantısı ayarlanmamış. Ayarlar bölümünden Webhook adresini girin.' };
 
   } catch (error) {
     console.error('[WebMark] Drive upload error:', error);
@@ -473,34 +247,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: false, error: err.message });
     });
     return true; // async
-  } else if (request.action === 'gdrive-auth') {
-    getAuthToken(true).then(token => {
-      chrome.storage.local.set({ gdrive_auto_sync: true }, () => {
-        chrome.storage.local.get(['gdrive_user_email'], (d) => {
-          sendResponse({ success: true, email: d.gdrive_user_email || 'Bağlandı' });
-        });
-      });
-    }).catch(err => {
-      sendResponse({ success: false, error: err.message });
-    });
-    return true;
   } else if (request.action === 'gdrive-status') {
-    chrome.storage.local.get(['gdrive_access_token', 'gdrive_user_email', 'gdrive_auto_sync', 'gdrive_webhook_url', 'gdrive_target_folder', 'gdrive_client_id'], (res) => {
+    chrome.storage.local.get(['gdrive_auto_sync', 'gdrive_webhook_url', 'gdrive_target_folder'], (res) => {
       const webhookUrl = (res.gdrive_webhook_url && res.gdrive_webhook_url.trim()) ||
                          (typeof WEBMARK_CONFIG !== 'undefined' ? WEBMARK_CONFIG.WEBHOOK_URL : '');
       const targetFolder = (res.gdrive_target_folder && res.gdrive_target_folder.trim()) ||
                            (typeof WEBMARK_CONFIG !== 'undefined' ? WEBMARK_CONFIG.TARGET_FOLDER : '');
       const isWebhookActive = !!webhookUrl;
-      const isOAuthActive = !!(res.gdrive_access_token || res.gdrive_user_email);
-      const isConnected = isWebhookActive || isOAuthActive;
+      const isConnected = isWebhookActive;
       sendResponse({
         connected: isConnected,
         isWebhook: isWebhookActive,
         webhookUrl: webhookUrl,
         targetFolder: targetFolder,
-        email: isWebhookActive ? 'Webhook Aktif' : (res.gdrive_user_email || ''),
-        autoSync: res.gdrive_auto_sync !== false && isConnected,
-        hasClientId: !!(res.gdrive_client_id && res.gdrive_client_id.trim())
+        autoSync: res.gdrive_auto_sync !== false && isConnected
       });
     });
     return true;
@@ -523,20 +283,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           return;
         }
 
-        // Fallback to OAuth test
-        const token = await getAuthToken(false);
-        const folderId = await getOrCreateFolder(token, 'WebMark');
-        sendResponse({ success: true, message: `OAuth bağlantısı başarılı! "WebMark" klasörüne erişildi.` });
+        throw new Error('Webhook adresi ayarlanmamış. Önce Webhook URL girin.');
       } catch (err) {
         sendResponse({ success: false, error: err.message });
       }
     })();
-    return true;
-  } else if (request.action === 'gdrive-disconnect') {
-    cachedAuthToken = null;
-    chrome.storage.local.remove(['gdrive_access_token', 'gdrive_user_email', 'gdrive_auto_sync'], () => {
-      sendResponse({ success: true });
-    });
     return true;
   }
 });

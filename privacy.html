@@ -46,36 +46,39 @@
   <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <span class="badge">Privacy Policy</span>
-      <span style="font-size: 12px; color: #94a3b8;">Updated: October 7, 2026</span>
+      <span style="font-size: 12px; color: #94a3b8;">Updated: October 9, 2026</span>
     </div>
     
     <h1>MEDronom - WebHighlight Privacy Policy</h1>
     
-    <p><strong>MEDronom - WebHighlight</strong> is designed with a <strong>privacy-first, 100% client-side</strong> architecture. We do not operate remote tracking servers, analytics engines, or databases. All data remains strictly in your own browser and your personal Google Drive account.</p>
+    <p><strong>MEDronom - WebHighlight</strong> lets you highlight and underline text on web pages and save the parts you choose as PDF files. The developer does not operate any server and <strong>receives no data from you</strong>.</p>
 
-    <h2>1. Data Collection & Processing</h2>
-    <h3>A. Local Highlights & Annotations</h3>
-    <p>The text you highlight, colors, and styles are stored locally inside your browser via <code>chrome.storage.local</code>. No personal data is sent to us.</p>
+    <h2>1. Data the Extension handles</h2>
+    <h3>A. Highlights (stored locally)</h3>
+    <p>The selected text, its color and style, a short piece of surrounding text and the page address are stored in <code>chrome.storage.local</code> on your device so your highlights reappear when you reopen a page. You can delete them from the extension popup; uninstalling removes all local data.</p>
 
-    <h3>B. Google Drive Integration (OAuth 2.0)</h3>
-    <p>When you enable Drive synchronization, the extension uses Google OAuth 2.0 (<code>drive.file</code> scope) to directly upload PDF files to your Google Drive under <code>Drive'ım / WebMark / [Site-Name]</code>. The extension can only access files it creates, and cannot access any other files in your Google Drive.</p>
+    <h3>B. Optional Google Drive saving (off unless you set it up)</h3>
+    <p>If you enter your own Google Apps Script web app address and turn on Drive saving, each highlight is turned into a PDF in your browser (highlighted text, a few lines before it and the sentence after it, page title and address) and sent to <strong>your own</strong> Apps Script address, which saves it into <strong>your</strong> Google Drive folder. Data travels only between your browser and your own Google account over HTTPS. Nothing is sent to the developer or any third party. Without this setup, no data leaves your browser.</p>
 
-    <h2>2. Permissions Justification</h2>
+    <h2>2. Permissions</h2>
     <table>
       <thead>
-        <tr><th>Permission</th><th>Justification</th></tr>
+        <tr><th>Permission</th><th>Purpose</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>storage</code></td><td>To save annotations locally in your browser.</td></tr>
-        <tr><td><code>activeTab</code> / <code>&lt;all_urls&gt;</code></td><td>To highlight text and capture PDFs on the page you select.</td></tr>
-        <tr><td><code>contextMenus</code></td><td>To provide quick right-click highlight & PDF options.</td></tr>
-        <tr><td><code>identity</code></td><td>To authenticate securely with Google Drive.</td></tr>
-        <tr><td><code>scripting</code></td><td>To display the floating toolbar and area selector UI.</td></tr>
+        <tr><td><code>storage</code></td><td>Save highlights, settings and switch states locally.</td></tr>
+        <tr><td><code>activeTab</code></td><td>Act on the page you are using when you open the popup or use a shortcut.</td></tr>
+        <tr><td><code>contextMenus</code></td><td>Highlight, underline and PDF options in the right-click menu.</td></tr>
+        <tr><td><code>offscreen</code></td><td>Create PDF files in a clean background document (DOM and canvas required).</td></tr>
+        <tr><td>Content script on all pages</td><td>Highlight tools must work on any page. Only the text you select and a few surrounding lines are read.</td></tr>
+        <tr><td><code>script.google.com</code>, <code>script.googleusercontent.com</code></td><td>Only for the optional Google Drive saving.</td></tr>
       </tbody>
     </table>
 
-    <h2>3. Zero Third-Party Sharing</h2>
-    <p>We do not sell, rent, monetize, or transmit user data. No tracking pixels, ads, or analytics scripts are included.</p>
+    <h2>3. What we do not do</h2>
+    <p>We do not sell, rent or share user data, and do not use it for advertising or unrelated purposes. We collect no name, email, IP address, browsing history or passwords. There is no analytics, tracking or advertising code, and no remote code is loaded: the PDF library is bundled inside the Extension.</p>
+
+    <p><strong>Türkçe özet:</strong> Vurgularınız yalnızca tarayıcınızda saklanır. Geliştiriciye veri gönderilmez. İsteğe bağlı Google Drive kaydı yalnızca sizin girdiğiniz kendi Apps Script adresiniz üzerinden, sizin Drive klasörünüze yapılır; kapalıyken hiçbir veri tarayıcınızdan çıkmaz.</p>
 
     <h2>4. Contact & Developer</h2>
     <p>Developer: <strong>Fatih Öncel</strong> (<a href="mailto:fatihoencel@gmail.com">fatihoencel@gmail.com</a>)</p>
